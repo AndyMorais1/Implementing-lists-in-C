@@ -1,0 +1,773 @@
+        -:    0:Source:src/singly_linked_list.c
+        -:    0:Graph:bin/singly_linked_list.gcno
+        -:    0:Data:bin/singly_linked_list.gcda
+        -:    0:Runs:3
+        -:    1:#include <stdio.h>
+        -:    2:#include <stdbool.h>
+        -:    3:#include <stddef.h>
+        -:    4:#include <string.h>
+        -:    5:#include <stdlib.h>
+        -:    6:#include "list.h"
+        -:    7:
+        -:    8:typedef struct Node_ *Node;
+        -:    9:struct Node_
+        -:   10:{
+        -:   11:    void *element;
+        -:   12:    Node next;
+        -:   13:};
+        -:   14:struct List_
+        -:   15:{
+        -:   16:    int size;
+        -:   17:    Node head;
+        -:   18:    Node tail;
+        -:   19:};
+        -:   20:
+      377:   21:Node create_node(void *element)
+        -:   22:{
+      377:   23:    Node node = malloc(sizeof(struct Node_));
+      377:   24:    if (node != NULL)
+        -:   25:    {
+      377:   26:        node->next = NULL;
+      377:   27:        node->element = element;
+        -:   28:    }
+      377:   29:    return node;
+        -:   30:}
+        -:   31:
+        -:   32:/**
+        -:   33: * @brief Creates a new list.
+        -:   34: *
+        -:   35: * @return List The new list.
+        -:   36: */
+       88:   37:List list_create()
+        -:   38:{
+       88:   39:    List list = malloc(sizeof(struct List_));
+       88:   40:    if (list != NULL)
+        -:   41:    {
+       88:   42:        list->head = NULL;
+       88:   43:        list->tail = NULL;
+       88:   44:        list->size = 0;
+        -:   45:    }
+       88:   46:    return list;
+        -:   47:}
+        -:   48:
+    #####:   49:void destroy_node(Node node, void (*free_element)(void *))
+        -:   50:{
+    #####:   51:    if (free_element != NULL)
+        -:   52:    {
+    #####:   53:        free_element(node->element);
+        -:   54:    }
+    #####:   55:    free(node);
+    #####:   56:}
+        -:   57:
+        -:   58:/**
+        -:   59: * @brief Destroys a list.
+        -:   60: *
+        -:   61: * Frees all memory allocated for the list, and for all elements of the list.
+        -:   62: *
+        -:   63: * @param list The list to destroy.
+        -:   64: * @param free_element The function to free the elements of the list.
+        -:   65: */
+       88:   66:void list_destroy(List list, void (*free_element)(void *))
+        -:   67:{
+       88:   68:    if (list_is_empty(list))
+        -:   69:    {
+        9:   70:        return;
+        -:   71:    }
+       79:   72:    Node current = list->head;
+      356:   73:    while (current != NULL)
+        -:   74:    {
+      277:   75:        Node next = current->next;
+      277:   76:        if (free_element != NULL && current->element != NULL)
+        -:   77:        {
+       15:   78:            free_element(current->element);
+        -:   79:        }
+      277:   80:        free(current);
+      277:   81:        current = next;
+        -:   82:    }
+       79:   83:    free(list);
+        -:   84:}
+        -:   85:
+        -:   86:/**
+        -:   87: * @brief Returns true iff the list contains no elements.
+        -:   88: *
+        -:   89: * @param list The linked list.
+        -:   90: * @return true iff the list contains no elements.
+        -:   91: */
+      696:   92:bool list_is_empty(List list)
+        -:   93:{
+      696:   94:    if (list_size(list) == 0)
+        -:   95:    {
+      139:   96:        return true;
+        -:   97:    }
+        -:   98:    else
+        -:   99:    {
+      557:  100:        return false;
+        -:  101:    }
+        -:  102:}
+        -:  103:
+        -:  104:/**
+        -:  105: * @brief Returns the number of elements in the list.
+        -:  106: *
+        -:  107: * @param list The linked list.
+        -:  108: * @return int The number of elements in the list.
+        -:  109: */
+      941:  110:int list_size(List list)
+        -:  111:{
+      941:  112:    return list->size;
+        -:  113:}
+        -:  114:
+        -:  115:/**
+        -:  116: * @brief Returns the first element of the list.
+        -:  117: *
+        -:  118: * @param list The linked list.
+        -:  119: * @return void* The first element of the list.
+        -:  120: */
+       45:  121:void *list_get_first(List list)
+        -:  122:{
+       45:  123:    if (list_is_empty(list))
+        -:  124:    {
+        9:  125:        return NULL;
+        -:  126:    }
+       36:  127:    Node target = list->head;
+       36:  128:    void *element = target->element;
+        -:  129:
+       36:  130:    return element;
+        -:  131:}
+        -:  132:
+        -:  133:/**
+        -:  134: * @brief Returns the last element of the list.
+        -:  135: *
+        -:  136: * @param list The linked list.
+        -:  137: * @return void* The last element of the list.
+        -:  138: */
+       47:  139:void *list_get_last(List list)
+        -:  140:{
+       47:  141:    if (list_is_empty(list))
+        -:  142:    {
+        9:  143:        return NULL;
+        -:  144:    }
+       38:  145:    Node target = list->tail;
+       38:  146:    void *element = target->element;
+        -:  147:
+       38:  148:    return element;
+        -:  149:}
+        -:  150:
+        -:  151:/**
+        -:  152: * @brief Returns the element at the specified position in the list.
+        -:  153: *
+        -:  154: * Range of valid positions: 0, ..., size()-1.
+        -:  155: *
+        -:  156: * @param list The linked list.
+        -:  157: * @param position The position of the element to return.
+        -:  158: * @return void* The element at the specified position in the list.
+        -:  159: */
+       66:  160:void *list_get(List list, int position)
+        -:  161:{
+       66:  162:    if (list_is_empty(list) || position >= list_size(list) || position < 0)
+        -:  163:    {
+        3:  164:        return NULL;
+        -:  165:    }
+       63:  166:    if (position == 0)
+        -:  167:    {
+       18:  168:        return list_get_first(list);
+        -:  169:    }
+       45:  170:    if (position == (list_size(list) - 1))
+        -:  171:    {
+       18:  172:        return list_get_last(list);
+        -:  173:    }
+       27:  174:    Node node = list->head;
+       27:  175:    int pos = 0;
+       72:  176:    while (pos < position)
+        -:  177:    {
+       45:  178:        node = node->next;
+       45:  179:        pos++;
+        -:  180:    }
+       27:  181:    return node->element;
+        -:  182:}
+        -:  183:
+        -:  184:/**
+        -:  185: * @brief Returns the position in the list of the first occurrence of the specified element.
+        -:  186: *
+        -:  187: * Returns -1 if the specified element does not occur in the list.
+        -:  188: *
+        -:  189: * @param list The linked list.
+        -:  190: * @param equal The function to compare two elements.
+        -:  191: * @param element The element to search for.
+        -:  192: * @return int The position in the list of the first occurrence of the specified element, or -1 if the specified element does not occur in the list.
+        -:  193: */
+       11:  194:int list_find(List list, bool (*equal)(void *, void *), void *element)
+        -:  195:{
+       11:  196:    if (list_is_empty(list) || equal == NULL)
+        -:  197:    {
+        3:  198:        return -1;
+        -:  199:    }
+        8:  200:    Node node = list->head;
+        8:  201:    int idx = 0;
+       33:  202:    while (node != NULL)
+        -:  203:    {
+       29:  204:        if (equal(node->element, element))
+        -:  205:        {
+        4:  206:            return idx;
+        -:  207:        }
+       25:  208:        node = node->next;
+       25:  209:        idx++;
+        -:  210:    }
+        4:  211:    return -1;
+        -:  212:}
+        -:  213:
+        -:  214:/**
+        -:  215: * @brief Inserts the specified element at the first position in the list.
+        -:  216: *
+        -:  217: * @param list The linked list.
+        -:  218: * @param element The element to insert.
+        -:  219: */
+        9:  220:void list_insert_first(List list, void *element)
+        -:  221:{
+        9:  222:    Node node = create_node(element);
+        9:  223:    if (list_is_empty(list))
+        -:  224:    {
+        6:  225:        list->head = node;
+        6:  226:        list->tail = node;
+        -:  227:    }
+        -:  228:    else
+        -:  229:    {
+        3:  230:        node->next = list->head;
+        3:  231:        list->head = node;
+        -:  232:    }
+        9:  233:    list->size++;
+        9:  234:}
+        -:  235:
+        -:  236:/**
+        -:  237:
+        -:  238:@brief Inserts the specified element at the last position in the list.*
+        -:  239:@param list The linked list.
+        -:  240:@param element The element to insert.
+        -:  241:*/
+      353:  242:void list_insert_last(List list, void *element)
+        -:  243:{
+      353:  244:    Node node = create_node(element);
+      353:  245:    if (list_is_empty(list))
+        -:  246:    {
+       85:  247:        list->head = node;
+       85:  248:        list->tail = node;
+        -:  249:    }
+        -:  250:    else
+        -:  251:    {
+      268:  252:        list->tail->next = node;
+      268:  253:        list->tail = node;
+        -:  254:    }
+      353:  255:    list->size++;
+      353:  256:}
+        -:  257:
+        -:  258:/**
+        -:  259: * @brief Inserts the specified element at the specified position in the list.
+        -:  260: *
+        -:  261: * Range of valid positions: 0, ..., size().
+        -:  262: * If the specified position is 0, insert corresponds to insertFirst.
+        -:  263: * If the specified position is size(), insert corresponds to insertLast.
+        -:  264: *
+        -:  265: * @param list The linked list.
+        -:  266: * @param element The element to insert.
+        -:  267: * @param position The position at which to insert the specified element.
+        -:  268: */
+       12:  269:void list_insert(List list, void *element, int position)
+        -:  270:{
+       12:  271:    if (position < 0 || position > list_size(list))
+        -:  272:    {
+        3:  273:        return;
+        -:  274:    }
+        9:  275:    Node node = create_node(element);
+        -:  276:
+        9:  277:    if (position == 0)
+        -:  278:    {
+        3:  279:        list_insert_first(list, element);
+        -:  280:    }
+        6:  281:    else if (position == list_size(list))
+        -:  282:    {
+        3:  283:        list_insert_last(list, element);
+        -:  284:    }
+        -:  285:    else
+        -:  286:    {
+        3:  287:        Node current = list->head;
+        9:  288:        for (int i = 0; i < position - 1; i++)
+        -:  289:        {
+        6:  290:            current = current->next;
+        -:  291:        }
+        3:  292:        node->next = current->next;
+        3:  293:        current->next = node;
+        3:  294:        list->size++;
+        -:  295:    }
+        -:  296:}
+        -:  297:
+        -:  298:/**
+        -:  299: * @brief Removes and returns the element at the first position in the list.
+        -:  300: *
+        -:  301: * @param list The linked list.
+        -:  302: * @return void* The element at the first position in the list.
+        -:  303: */
+       15:  304:void *list_remove_first(List list)
+        -:  305:{
+       15:  306:    if (list_is_empty(list))
+        -:  307:    {
+        3:  308:        return NULL;
+        -:  309:    }
+       12:  310:    Node target = list->head;
+       12:  311:    void *element = target->element;
+       12:  312:    list->head = list->head->next;
+       12:  313:    free(target);
+       12:  314:    list->size--;
+       12:  315:    if (list_size(list) == 0)
+        -:  316:    {
+        6:  317:        list->tail = NULL;
+        -:  318:    }
+        -:  319:
+       12:  320:    return element;
+        -:  321:}
+        -:  322:
+        -:  323:/**
+        -:  324: * @brief Removes and returns the element at the last position in the list.
+        -:  325: *
+        -:  326: * @param list The linked list.
+        -:  327: * @return void* The element at the last position in the list.
+        -:  328: */
+        9:  329:void *list_remove_last(List list)
+        -:  330:{
+        9:  331:    if (list_is_empty(list))
+        -:  332:    {
+        3:  333:        return NULL;
+        -:  334:    }
+        6:  335:    void *element = list->tail->element;
+        -:  336:
+        6:  337:    if (list->size == 1)
+        -:  338:    {
+        3:  339:        return list_remove_first(list);
+        -:  340:    }
+        -:  341:
+        3:  342:    Node node = list->head;
+       12:  343:    while (node->next->next != NULL)
+        -:  344:    {
+        9:  345:        node = node->next;
+        -:  346:    }
+        3:  347:    free(list->tail);
+        3:  348:    node->next = NULL;
+        3:  349:    list->tail = node;
+        3:  350:    list->size--;
+        3:  351:    return element;
+        -:  352:}
+        -:  353:/**
+        -:  354: * @brief Removes and returns the element at the specified position in the list.
+        -:  355: *
+        -:  356: * Range of valid positions: 0, ..., size()-1.
+        -:  357: *
+        -:  358: * @param list The linked list.
+        -:  359: * @param position The position of the element to remove.
+        -:  360: * @return void* The element at the specified position in the list.
+        -:  361: */
+       18:  362:void *list_remove(List list, int position)
+        -:  363:{
+       18:  364:    if (position > list->size - 1 || position < 0 || list_is_empty(list))
+        -:  365:    {
+        6:  366:        return NULL;
+        -:  367:    }
+       12:  368:    if (list->size == 1 || position == 0)
+        -:  369:    {
+        3:  370:        return list_remove_first(list);
+        -:  371:    }
+        9:  372:    Node node = list->head->next;
+       15:  373:    for (int i = 1; i < position - 1; i++)
+        -:  374:    {
+        6:  375:        node = node->next;
+        -:  376:    }
+        9:  377:    Node next = node->next;
+        9:  378:    void *element = next->element;
+        9:  379:    node->next = next->next;
+        9:  380:    free(next);
+        9:  381:    list->size--;
+        9:  382:    return element;
+        -:  383:}
+        -:  384:
+        -:  385:/**
+        -:  386: * @brief Removes all elements from the list.
+        -:  387: *
+        -:  388: * @param list The linked list.
+        -:  389: * @param free_element The function to free the elements of the list.
+        -:  390: */
+        6:  391:void list_make_empty(List list, void (*free_element)(void *))
+        -:  392:{
+        6:  393:    if (list_is_empty(list))
+        -:  394:    {
+    #####:  395:        return;
+        -:  396:    }
+        6:  397:    Node current = list->head;
+       39:  398:    while (current != NULL)
+        -:  399:    {
+       33:  400:        Node next = current->next;
+       33:  401:        if (free_element != NULL)
+        -:  402:        {
+        3:  403:            free_element(current->element);
+        -:  404:        }
+       33:  405:        free(current);
+       33:  406:        current = next;
+        -:  407:    }
+        -:  408:
+        6:  409:    list->head = NULL;
+        6:  410:    list->tail = NULL;
+        6:  411:    list->size = 0;
+        -:  412:}
+        -:  413:
+        -:  414:/**
+        -:  415: * @brief Returns an array with the elements of the list.
+        -:  416: *
+        -:  417: * @param list The linked list.
+        -:  418: * @param out_array The array to fill with the elements of the list.
+        -:  419: */
+        3:  420:void list_to_array(List list, void **out_array)
+        -:  421:{
+       12:  422:    for (int i = 0; i != list->size; i++)
+        -:  423:    {
+        9:  424:        out_array[i] = list_get(list, i);
+        -:  425:    }
+        3:  426:    return;
+        -:  427:}
+        -:  428:
+        -:  429:/**
+        -:  430: * @brief Returns the number of occurrences on an element.
+        -:  431: *
+        -:  432: * @param list The linked list.
+        -:  433: * @param equal The function to compare two elements.
+        -:  434: * @param element The element to search for.
+        -:  435: * @return int The number of occurrences on an element.
+        -:  436: */
+        6:  437:int list_count_all(List list, bool (*equal)(void *, void *), void *element)
+        -:  438:{
+        6:  439:    Node node = create_node(element);
+        6:  440:    int count = 0;
+        6:  441:    int pos = 0;
+        6:  442:    if (list_is_empty(list))
+        -:  443:    {
+        3:  444:        return 0;
+        -:  445:    }
+        -:  446:    else
+        -:  447:    {
+        3:  448:        if (list_size(list) == 1)
+        -:  449:        {
+    #####:  450:            if (equal(element, list->head->element))
+        -:  451:            {
+    #####:  452:                return 1;
+        -:  453:            }
+        -:  454:            else
+        -:  455:            {
+    #####:  456:                return 0;
+        -:  457:            }
+        -:  458:        }
+        -:  459:        else
+        -:  460:        {
+        3:  461:            if (list_size(list) > 1)
+        -:  462:            {
+       21:  463:                while (pos < list_size(list))
+        -:  464:                {
+       18:  465:                    if (equal(list->head->element, element))
+        -:  466:                    {
+        6:  467:                        count++;
+        -:  468:                    }
+       18:  469:                    list->head = list->head->next;
+       18:  470:                    pos++;
+        -:  471:                }
+        3:  472:                return count;
+        -:  473:            }
+        -:  474:        }
+        -:  475:    }
+    #####:  476:}
+        -:  477:
+        -:  478:/**
+        -:  479: * @brief Removes all occurrences of an element, and returns the number of occurrences.
+        -:  480: *
+        -:  481: * @param list The linked list.
+        -:  482: * @param equal_element The function to compare two elements.
+        -:  483: * @param free_element The function to free the elements of the list.
+        -:  484: * @param element The element to search for.
+        -:  485: * @return int The number of occurrences on an element.
+        -:  486: */
+        5:  487:int list_remove_all(List list, bool (*equal_element)(void *, void *), void (*free_element)(void *), void *element)
+        -:  488:{
+        5:  489:    if (list_is_empty(list) || equal_element == NULL)
+        -:  490:    {
+    #####:  491:        return 0;
+        -:  492:    }
+        5:  493:    int count = 0;
+        5:  494:    Node current = list->head;
+        5:  495:    Node prev = NULL;
+       31:  496:    while (current != NULL)
+        -:  497:    {
+       26:  498:        if (equal_element(current->element, element))
+        -:  499:        {
+        7:  500:            if (prev == NULL)
+        -:  501:            {
+    #####:  502:                list->head = current->next;
+        -:  503:            }
+        -:  504:            else
+        -:  505:            {
+        7:  506:                prev->next = current->next;
+        -:  507:            }
+        -:  508:
+        7:  509:            Node temp = current;
+        7:  510:            current = current->next;
+        7:  511:            if (free_element != NULL)
+        -:  512:            {
+        3:  513:                free_element(temp->element);
+        -:  514:            }
+        7:  515:            free(temp);
+        7:  516:            list->size--;
+        7:  517:            count++;
+        -:  518:        }
+        -:  519:        else
+        -:  520:        {
+       19:  521:            prev = current;
+       19:  522:            current = current->next;
+        -:  523:        }
+        -:  524:    }
+        -:  525:
+        5:  526:    return count;
+        -:  527:}
+        -:  528:
+        -:  529:/**
+        -:  530: * @brief Removes all duplicate occurrences of an element.
+        -:  531: *
+        -:  532: * Keeps only the first occurrence, and returns the number of occurrences.
+        -:  533: *
+        -:  534: * @param list The linked list.
+        -:  535: * @param equal_element The function to compare two elements.
+        -:  536: * @param free_element The function to free the elements of the list.
+        -:  537: * @param element The element to search for.
+        -:  538: * @return int The number of occurrences on an element.
+        -:  539: */
+        3:  540:int list_remove_duplicates(List list, bool (*equal_element)(void *, void *), void (*free_element)(void *), void *element)
+        -:  541:{
+        3:  542:    if (list_is_empty(list) || equal_element == NULL)
+        -:  543:    {
+    #####:  544:        return 0;
+        -:  545:    }
+        3:  546:    int count = 0;
+        3:  547:    Node current = list->head;
+        3:  548:    Node prev = NULL;
+       18:  549:    while (current != NULL)
+        -:  550:    {
+       15:  551:        if (equal_element(current->element, element))
+        -:  552:        {
+        -:  553:
+        6:  554:            if (prev == NULL)
+        -:  555:            {
+    #####:  556:                list->head = current->next;
+        -:  557:            }
+        -:  558:            else
+        -:  559:            {
+        6:  560:                prev->next = current->next;
+        -:  561:            }
+        6:  562:            Node temp = current;
+        6:  563:            current = current->next;
+        6:  564:            if (free_element != NULL)
+        -:  565:            {
+    #####:  566:                free_element(temp->element);
+        -:  567:            }
+        6:  568:            free(temp);
+        6:  569:            list->size--;
+        6:  570:            count++;
+        -:  571:        }
+        -:  572:        else
+        -:  573:        {
+        9:  574:            prev = current;
+        9:  575:            current = current->next;
+        -:  576:        }
+        -:  577:    }
+        3:  578:    return count;
+        -:  579:}
+        -:  580:
+        -:  581:/**
+        -:  582: * @brief Returns the result from the join of two lists.
+        -:  583: *
+        -:  584: * Preserves order.
+        -:  585: *
+        -:  586: * @param list1 The first linked list.
+        -:  587: * @param list2 The second linked list.
+        -:  588: * @return List The resulting from the join of two lists.
+        -:  589: */
+        3:  590:List list_join(List list1, List list2)
+        -:  591:{
+        3:  592:    List newlist = list_create();
+        3:  593:    Node node = list1->head;
+       12:  594:    while (node != NULL)
+        -:  595:    {
+        9:  596:        list_insert_last(newlist, node->element);
+        9:  597:        node = node->next;
+        -:  598:    }
+        3:  599:    node = list2->head;
+        9:  600:    while (node != NULL)
+        -:  601:    {
+        6:  602:        list_insert_last(newlist, node->element);
+        6:  603:        node = node->next;
+        -:  604:    }
+        3:  605:    return newlist;
+        -:  606:}
+        -:  607:
+        -:  608:/**
+        -:  609: * @brief Outputs a formatted representation of the list.
+        -:  610: *
+        -:  611: * @param list The linked list.
+        -:  612: * @param print_element The function to print the elements of the list.
+        -:  613: */
+    #####:  614:void list_print(List list, void (*print_element)(void *element))
+        -:  615:{
+    #####:  616:    Node auxNode = list->head;
+    #####:  617:    while (auxNode != NULL)
+        -:  618:    {
+    #####:  619:        print_element(auxNode->element);
+    #####:  620:        auxNode = auxNode->next;
+        -:  621:    }
+    #####:  622:}
+        -:  623:
+        -:  624:/**
+        -:  625: * @brief Returns a list with the elements from start_idx to end_idx.
+        -:  626: *
+        -:  627: * @param list The linked list.
+        -:  628: * @param start_idx The index of the first element to include.
+        -:  629: * @param end_idx The index of the last element to include.
+        -:  630: * @return List A list with the elements from start_idx to end_idx.
+        -:  631: */
+        3:  632:List list_get_sublist_between(List list, int start_idx, int end_idx)
+        -:  633:{
+        3:  634:    List newList = list_create();
+        3:  635:    if (list_is_empty(list) || start_idx < 0 || end_idx >= list_size(list) || start_idx > end_idx)
+        -:  636:    {
+    #####:  637:        return NULL;
+        -:  638:    }
+        -:  639:    else
+        -:  640:    {
+        3:  641:        if (list_size(list) == 1)
+        -:  642:        {
+    #####:  643:            list_insert_first(newList, list->head->element);
+    #####:  644:            return newList;
+        -:  645:        }
+        -:  646:        else
+        -:  647:        {
+        3:  648:            int pos = 0;
+        3:  649:            Node current = list->head;
+        6:  650:            while (pos < start_idx)
+        -:  651:            {
+        3:  652:                current = current->next;
+        3:  653:                pos++;
+        -:  654:            }
+       12:  655:            while (pos <= end_idx)
+        -:  656:            {
+        9:  657:                list_insert_last(newList, current->element);
+        9:  658:                current = current->next;
+        9:  659:                pos++;
+        -:  660:            }
+        3:  661:            return newList;
+        -:  662:        }
+        -:  663:    }
+        -:  664:}
+        -:  665:
+        -:  666:/**
+        -:  667: * @brief Returns a list with the elements in the given array of unordered indexes.
+        -:  668: *
+        -:  669: * Returns the size of the array in the out parameter count.
+        -:  670: *
+        -:  671: * @param list The linked list.
+        -:  672: * @param indexes The array of unordered indexes.
+        -:  673: * @param count The size of the array.
+        -:  674: * @return List A list with the elements in the given array of unordered indexes.
+        -:  675: */
+        3:  676:List list_get_sublist(List list, int indexes[], int count)
+        -:  677:{
+        3:  678:    if (list_is_empty(list) || indexes == NULL || count == 0)
+        -:  679:    {
+    #####:  680:        return NULL;
+        -:  681:    }
+        3:  682:    List newList = list_create();
+        3:  683:    if (newList == NULL)
+        -:  684:    {
+    #####:  685:        return NULL;
+        -:  686:    }
+       12:  687:    for (int i = 0; i < count; i++)
+        -:  688:    {
+        9:  689:        int idx = indexes[i];
+        9:  690:        if (idx < 0 || idx >= list_size(list))
+        -:  691:        {
+    #####:  692:            list_destroy(newList, NULL);
+    #####:  693:            return NULL;
+        -:  694:        }
+        9:  695:        void *aux = list_get(list, idx);
+        9:  696:        if (aux == NULL)
+        -:  697:        {
+    #####:  698:            list_destroy(newList, NULL);
+    #####:  699:            return NULL;
+        -:  700:        }
+        9:  701:        list_insert_last(newList, aux);
+        -:  702:    }
+        3:  703:    return newList;
+        -:  704:}
+        -:  705:
+        -:  706:/**
+        -:  707: * @brief Returns a list with the result of the execution of the function func with each element of the list as parameter.
+        -:  708: *
+        -:  709: * @param list The linked list.
+        -:  710: * @param func The function to apply to each element of the list.
+        -:  711: * @return List A list with the result of the execution of the function func with each element of the list as parameter.
+        -:  712: */
+        3:  713:List list_map(List list, void *(*func)(void *))
+        -:  714:{
+        3:  715:    if (list_is_empty(list) || func == NULL)
+        -:  716:    {
+    #####:  717:        return NULL;
+        -:  718:    }
+        -:  719:
+        3:  720:    List new_list = list_create();
+        3:  721:    if (new_list == NULL)
+        -:  722:    {
+    #####:  723:        return NULL;
+        -:  724:    }
+        -:  725:
+        3:  726:    Node current = list->head;
+       18:  727:    while (current != NULL)
+        -:  728:    {
+        -:  729:
+       15:  730:        void *result = func(current->element);
+        -:  731:
+       15:  732:        list_insert_last(new_list, result);
+        -:  733:
+       15:  734:        current = current->next;
+        -:  735:    }
+        -:  736:
+        3:  737:    return new_list;
+        -:  738:}
+        -:  739:
+        -:  740:/**
+        -:  741: * @brief Returns a list with the elements that return true when applied with the given function.
+        -:  742: *
+        -:  743: * @param list The linked list.
+        -:  744: * @param func The boolean function to apply to each element of the list.
+        -:  745: * @return List A list with the elements that return true when applied with the given function.
+        -:  746: */
+        3:  747:List list_filter(List list, bool (*func)(void *))
+        -:  748:{
+        3:  749:    if (list_is_empty(list) || func == NULL)
+        -:  750:    {
+    #####:  751:        return NULL;
+        -:  752:    }
+        3:  753:    List newList = list_create();
+        3:  754:    if (newList == NULL)
+        -:  755:    {
+    #####:  756:        return NULL;
+        -:  757:    }
+        3:  758:    Node current = list->head;
+       18:  759:    while (current != NULL)
+        -:  760:    {
+       15:  761:        bool result = func(current->element);
+       15:  762:        if (result)
+        -:  763:        {
+        6:  764:            list_insert_last(newList, current->element);
+        -:  765:        }
+       15:  766:        current = current->next;
+        -:  767:    }
+        3:  768:    return newList;
+        -:  769:}
